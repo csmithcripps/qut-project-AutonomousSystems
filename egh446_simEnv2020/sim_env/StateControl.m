@@ -3,6 +3,7 @@
   persistent firstentry
   persistent WP_index
   persistent prev_error
+  persistent error_integral
   coder.extrinsic('wrapToPi');
   coder.extrinsic('wrapTo360');
   coder.extrinsic('wrapTo2Pi');
@@ -16,6 +17,14 @@ end
 if isempty(WP_index)
     WP_index = 0;
 end
+
+if isempty(prev_error)
+    prev_error = 0;
+end
+
+if isempty(error_integral)
+    error_integral = 0;
+end
   
 if firstentry == 0
     WP_index = 2;
@@ -28,10 +37,13 @@ if WP_index > length(Xd)
 end 
 
 %controller gain
-kpTheta=3.9;
-kdTheta = 4;
+kpTheta= 50;
+kdTheta = 10;
+kiTheta = 0.01;
 
-kpVel = 1;
+max_error = 1000;
+
+kpVel = 0.25;
 
 %Extract waypoint list
 Xd(WP_index);
@@ -65,16 +77,19 @@ distance_to_current_waypoint = sqrt((x - Xd(WP_index))^2 + (thetaDot - Yd(WP_ind
 %Set Capture condition here: 
 if distance_to_current_waypoint < 0.2  
     WP_index = WP_index+1;
+    error_integral = 0;
 else
     WP_index = WP_index;
 end
 
 %control output, wrapped to +/-pi
-thetaDot = kpTheta * wrapToPi(error) + kdTheta * (error - prev_error);
-vel = 0.5 + kpVel * distance_to_current_waypoint;
+thetaDot = kpTheta * wrapToPi(error) ;
+thetaDot = thetaDot + kdTheta * (error - prev_error) + kiTheta * error_integral;
+vel = min(0.2 + kpVel * distance_to_current_waypoint, 1);
 
 
 prev_error = error;
+error_integral = min(error_integral + error,max_error);
 
 
 
