@@ -70,7 +70,7 @@ else
 end
 
 %control output, wrapped to +/-pi
-thetaDot = kpTheta * wrapToPi(error) + kdTheta * (error - prev_error);
+thetaDot = kpTheta * wrapToPi(error);
 vel = 0.5 + kpVel * distance_to_current_waypoint;
 
 
